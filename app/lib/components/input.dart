@@ -12,6 +12,7 @@ class InputField extends StatelessWidget {
   final TextStyle? hintStyle;
   final int? maxLines;
   final int? minLines;
+  final bool? readOnly;
   final Function(String)? onChanged;
 
   const InputField({
@@ -27,11 +28,13 @@ class InputField extends StatelessWidget {
     this.maxLines,
     this.minLines,
     this.onChanged,
+    this.readOnly,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      readOnly: readOnly ?? false,
       keyboardType: keyboardType,
       controller: controller,
       obscureText: obscureText ?? false,
