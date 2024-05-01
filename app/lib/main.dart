@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flyssh/handler/view_switcher.dart';
 import 'package:get/get.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +23,9 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: "Geist",
         brightness: Brightness.dark,
+        colorScheme: const ColorScheme.dark(
+          background: Colors.black,
+        ),
       ),
       initial: AdaptiveThemeMode.dark,
       builder: (theme, darkTheme) => GetMaterialApp(

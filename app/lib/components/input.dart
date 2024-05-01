@@ -13,7 +13,11 @@ class InputField extends StatelessWidget {
   final int? maxLines;
   final int? minLines;
   final bool? readOnly;
+  final InputBorder? border;
   final Function(String)? onChanged;
+  final Color? fillColor;
+  final Color? prefixIconColor;
+  final InputBorder? enabledBorder;
 
   const InputField({
     required this.hintText,
@@ -29,6 +33,10 @@ class InputField extends StatelessWidget {
     this.minLines,
     this.onChanged,
     this.readOnly,
+    this.border,
+    this.fillColor,
+    this.prefixIconColor,
+    this.enabledBorder,
   });
 
   @override
@@ -42,12 +50,14 @@ class InputField extends StatelessWidget {
         hintText: hintText,
         prefixIcon: prefixIcon,
         contentPadding: const EdgeInsets.all(8.0),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          borderSide: BorderSide.none,
-        ),
+        enabledBorder: enabledBorder,
+        border: border ??
+            OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.0),
+              borderSide: BorderSide.none,
+            ),
         prefixIconColor: AdaptiveTheme.of(context).mode.isDark ? Colors.grey : Colors.black,
-        fillColor: AdaptiveTheme.of(context).mode.isLight ? Colors.grey.shade200 : Colors.grey.shade800,
+        fillColor: fillColor ?? (AdaptiveTheme.of(context).mode.isLight ? Colors.grey.shade200 : Colors.grey.shade800),
         filled: true,
         hintStyle: hintStyle,
         suffixIcon: suffixIcon,

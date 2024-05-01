@@ -8,10 +8,9 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import F, Q
-from datetime import datetime, timedelta
 from flyssh.models import User, Host, Key
-from django.shortcuts import get_object_or_404
-
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 # Create your views here.
 
@@ -73,10 +72,15 @@ def get_profile(request):
     return Response({"username": user.username, "first_name": user.first_name, "last_name": user.last_name}, status=200)
 
 
-@api_view(["POST"])
+@api_view(["POST","GET"])
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
-def create_host(request):
+def hosts(request:HttpRequest):
+    if request.method == "GET":
+        token = request.headers["Authorization"].split(" ")[1]
+        user = Token.objects.get(key=token).user
+        hosts = Host.objects.all().filter(owner_id=user.id).values('hostname','label','username').order_by("-id")
+        return Response(list(hosts),status=200)
     body = CreateHostSerializer(data=request.data)
     if not body.is_valid():
         return Response({"message": body.errors}, status=400)
@@ -148,3 +152,5 @@ def create_key(request):
     key.save()
 
     return Response({"message": "Key created","id":key.id}, status=201)
+
+
