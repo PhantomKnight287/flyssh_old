@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - .:/app
-      - sqlite_volume:/app/db.sqlite3
+      - ./db.sqlite3:/app/db.sqlite3
     container_name: flyssh
     networks:
       - config-manager_proxy
