@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-fu70iywawq4ks56^4t3=bhp-t182(d00oyh-e5-!1=u6a)jqqs
 DEBUG = True if environ.get("HOST_URL",None) is None else False
 
 
-ALLOWED_HOSTS =  ["*"] if environ.get("HOST_URL",None) is None else [environ.get("HOST_URL")]
+ALLOWED_HOSTS =  ["*"] 
 
 
 # Application definition
