@@ -16,3 +16,6 @@ services:
 networks:
   config-manager_proxy:
     external: true
+
+volumes:
+  sqlite_volume:
