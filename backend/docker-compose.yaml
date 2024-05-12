@@ -8,7 +8,8 @@ services:
     container_name: flyssh
     networks:
       - config-manager_proxy
-
+    environment:
+      - HOST_URL=flyssh.cantcode.fyi
 
 networks:
   config-manager_proxy:
