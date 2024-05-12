@@ -28,9 +28,9 @@ SECRET_KEY = 'django-insecure-fu70iywawq4ks56^4t3=bhp-t182(d00oyh-e5-!1=u6a)jqqs
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True if environ.get("HOST_URL",None) is None else False
-
-
-ALLOWED_HOSTS =  ["*"] 
+ALLOWED_HOSTS =  ["*"] if environ.get("HOST_URL",None) is None else [environ.get("HOST_URL")]
+ALLOWED_HOSTS =  ["*"] if environ.get("HOST_URL",None) is None else [environ.get("HOST_URL")]
+CSRF_TRUSTED_ORIGINS =  ["https://*.cantcode.fyi"]
 
 
 # Application definition
