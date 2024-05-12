@@ -30,3 +30,14 @@ class CreateKeySerializer(serializers.Serializer):
     passphrase =serializers.CharField(required=False)
     master_key = serializers.CharField()
 
+
+class DecodePasswordSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    master_key = serializers.CharField()
+    
+
+class UpdateKeySerializer(CreateKeySerializer):
+    id = serializers.IntegerField()
+
+class UpdateHostSerializer(CreateHostSerializer):
+    id = serializers.IntegerField()

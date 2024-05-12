@@ -129,6 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         keyboardType: TextInputType.visiblePassword,
                         controller: _passwordController,
                         obscureText: !passwordVisible,
+                        maxLines: 1,
                         suffixIcon: IconButton(
                           icon: Icon(
                             passwordVisible ? Icons.visibility_off : Icons.visibility,

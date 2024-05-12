@@ -3,19 +3,26 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flyssh/components/input.dart';
 import 'package:flyssh/constants/main.dart';
+import 'package:flyssh/models/host.dart';
 import 'package:flyssh/models/key.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:encrypt/encrypt.dart' as encrypt;
 
-class AddHostScreen extends StatefulWidget {
-  const AddHostScreen({super.key});
+class UpdateHostScreen extends StatefulWidget {
+  final Host host;
+
+  const UpdateHostScreen({
+    super.key,
+    required this.host,
+  });
 
   @override
-  State<AddHostScreen> createState() => _AddHostScreenState();
+  State<UpdateHostScreen> createState() => _UpdateHostScreenState();
 }
 
-class _AddHostScreenState extends State<AddHostScreen> {
+class _UpdateHostScreenState extends State<UpdateHostScreen> {
   final _formKey = GlobalKey<FormState>();
   final _addressController = TextEditingController();
   final _labelController = TextEditingController();
@@ -37,7 +44,26 @@ class _AddHostScreenState extends State<AddHostScreen> {
   @override
   void initState() {
     super.initState();
+    _addressController.text = widget.host.hostname;
+    _labelController.text = widget.host.label ?? "";
+    _usernameController.text = widget.host.username;
+    _passwordController.text = widget.host.password ?? "";
+    selectedKey = widget.host.sshKey;
+
     fetchKeys();
+    setPassword();
+  }
+
+  void setPassword() async {
+    final prefs = await SharedPreferences.getInstance();
+    final masterKey = prefs.getString("master_key")!;
+
+    if (widget.host.password != null && widget.host.password!.isNotEmpty) {
+      final fernet = encrypt.Fernet(encrypt.Key.fromBase64(masterKey));
+      final encrypter = encrypt.Encrypter(fernet);
+      final decrypted = encrypter.decrypt64(widget.host.password!.replaceFirst("b'", "'").replaceAll("'", ""));
+      _passwordController.text = decrypted;
+    }
   }
 
   void _createHost() async {
@@ -64,6 +90,7 @@ class _AddHostScreenState extends State<AddHostScreen> {
       "label": _labelController.text,
       "hostname": _addressController.text,
       "master_key": masterKey,
+      "id": widget.host.id,
     };
 
     if (selectedKey == null) {
@@ -71,7 +98,11 @@ class _AddHostScreenState extends State<AddHostScreen> {
     } else {
       payload["key_id"] = selectedKey!.id;
     }
-    final req = await http.post(Uri.parse("$BACKEND_URL/hosts"), headers: {"Authorization": "Token $token", "Content-Type": "application/json"}, body: jsonEncode(payload));
+    final req = await http.patch(
+      Uri.parse("$BACKEND_URL/hosts"),
+      headers: {"Authorization": "Token $token", "Content-Type": "application/json"},
+      body: jsonEncode(payload),
+    );
     setState(() {
       loading = false;
     });
@@ -109,7 +140,7 @@ class _AddHostScreenState extends State<AddHostScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Add New Host",
+          "Update Host",
           style: TextStyle(
             fontWeight: FontWeight.w600,
           ),

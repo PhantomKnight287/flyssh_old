@@ -46,6 +46,8 @@ class InputField extends StatelessWidget {
       keyboardType: keyboardType,
       controller: controller,
       obscureText: obscureText ?? false,
+      minLines: minLines,
+      maxLines: maxLines,
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: prefixIcon,

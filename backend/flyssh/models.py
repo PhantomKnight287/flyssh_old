@@ -1,7 +1,7 @@
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-import hashlib,base64
+import base64
 from cryptography.fernet import Fernet
 
 # Create your models here.
@@ -40,7 +40,7 @@ class Host(models.Model):
     hostname = models.CharField(max_length = 1024)
     label = models.CharField(max_length = 255,blank=True,null=True)
     username = models.CharField(max_length = 1024)
-    password = models.CharField(max_length = 1024, blank = True, null = True)
+    password = models.TextField(blank = True, null = True)
     owner = models.ForeignKey(User,on_delete=models.CASCADE,blank=False,null=True,)
     key = models.ForeignKey('Key', on_delete=models.SET_NULL, blank=True, null=True, related_name='host')
 
@@ -48,7 +48,9 @@ class Host(models.Model):
     def encrypt_password(self,key,):
         self.password = Fernet(key).encrypt(self.password.encode())
 
-
+    def decode_password(self,key:str):
+        f = Fernet(key)
+        self.password = f.decrypt(self.password.replace("b'","").replace("'","").encode())
 
     def __str__(self):
         return f"{self.username}@{self.hostname}" if self.label is None else f"{self.username}@{self.hostname} {self.label}"
@@ -69,6 +71,13 @@ class Key(models.Model):
         cipher = Fernet(key)
         self.passphrase = cipher.encrypt(self.passphrase.encode())
 
+    def decode_value(self,key:str):
+            f = Fernet(key)
+            self.value = f.decrypt(self.value.replace("b'","").replace("'","").encode())
+    
+    def decode_passphrase(self,key:str):
+            f = Fernet(key)
+            self.passphrase = f.decrypt(self.passphrase.replace("b'","").replace("'","").encode())
 
     def __str__(self):
         return self.label

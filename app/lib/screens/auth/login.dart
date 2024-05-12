@@ -114,6 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         keyboardType: TextInputType.visiblePassword,
                         controller: _passwordController,
                         obscureText: !passwordVisible,
+                        maxLines: 1,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your password';

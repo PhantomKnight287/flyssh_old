@@ -23,5 +23,6 @@ urlpatterns = [
     path('auth/register',views.register,name='register'),
     path('auth/@me',views.get_profile,name='me'),
     path('hosts',views.hosts,name='hosts'),
-    path('keys',views.create_key,name='create_key'),
+    path('keys',views.keys,name='keys'),
+    path('hosts/password',views.decode_password,name='decode_password')
 ]

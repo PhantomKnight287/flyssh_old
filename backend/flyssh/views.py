@@ -1,16 +1,14 @@
 from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.contrib.auth import authenticate, login
-from flyssh.serializers import LoginSerializer, RegisterSerializer, CreateHostSerializer, CreateKeySerializer
+from flyssh.serializers import LoginSerializer, RegisterSerializer, CreateHostSerializer, CreateKeySerializer, DecodePasswordSerializer, UpdateKeySerializer, UpdateHostSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import F, Q
 from flyssh.models import User, Host, Key
-import json
-from django.core.serializers.json import DjangoJSONEncoder
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 
@@ -72,30 +70,55 @@ def get_profile(request):
     return Response({"username": user.username, "first_name": user.first_name, "last_name": user.last_name}, status=200)
 
 
-@api_view(["POST","GET"])
+@api_view(["POST","GET","PATCH"])
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
 def hosts(request:HttpRequest):
     if request.method == "GET":
         token = request.headers["Authorization"].split(" ")[1]
         user = Token.objects.get(key=token).user
-        hosts = Host.objects.all().filter(owner_id=user.id).values('hostname','label','username').order_by("-id")
+        hosts = Host.objects.prefetch_related('key').all().filter(owner_id=user.id).values('hostname','label','username','id','password','key','key__label', 'key__value', 'key__passphrase',"key__id").order_by("-id")
         return Response(list(hosts),status=200)
+    
+
+    if request.method == "PATCH":
+        body = UpdateHostSerializer(data=request.data)
+        token = request.headers["Authorization"].split(" ")[1]
+        user = Token.objects.get(key=token).user
+        if(not body.is_valid()):
+            return Response({"message": body.errors}, status=400)
+           
+        host = get_object_or_404(Host,id=body.data.get("id"),owner_id=user.id,)
+        host.hostname = body.data.get("hostname") if body.data.get("hostname") else host.hostname
+        host.label = body.data.get("label") if body.data.get("label") else host.label
+        host.username = body.data.get("username") if body.data.get("username") else host.username
+        if(body.data.get("password")):
+            host.password = body.data.get("password")
+            host.encrypt_password()
+
+        host.save()
+        return Response({"message":"Host Updated"},status=200)
+
+
+
     body = CreateHostSerializer(data=request.data)
     if not body.is_valid():
         return Response({"message": body.errors}, status=400)
     if not body.data.get("password", None) and not body.data.get("key_id", None):
         return Response({"message": "Please provide password or key"}, status=400)
 
+
+
+
     token = request.headers["Authorization"].split(" ")[1]
     user = Token.objects.get(key=token).user
-    host = Host(
+    host =  Host(
         hostname=body.data.get("hostname"),
         username=body.data.get("username"),
         password=body.data.get("password"),
         owner_id=user.id,
         label=body.data.get("label"),
-    )
+    ) 
     if (body.data.get("password", None)):
         try:
             host.encrypt_password(body.data.get("master_key"))
@@ -123,10 +146,33 @@ def hosts(request:HttpRequest):
 
 
 
-@api_view(["POST"])
+@api_view(["POST","GET","PATCH"])
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
-def create_key(request):
+def keys(request:HttpRequest):
+    if(request.method=="GET"):
+        token = request.headers["Authorization"].split(" ")[1]
+        user = Token.objects.get(key=token).user
+        keys = Key.objects.all().filter(owner_id=user.id).values('label','id','value','passphrase').order_by("-id")
+        return Response(list(keys),status=200)
+    
+    if request.method == "PATCH":
+        token = request.headers["Authorization"].split(" ")[1]
+        user = Token.objects.get(key=token).user
+        body = UpdateKeySerializer(data=request.data)
+        if not body.is_valid():
+            return Response({"message": body.errors}, status=400)
+        key = get_object_or_404(Key,id=body.data.get("id"),owner_id=user.id,)
+
+        key.label = body.data.get("label") if body.data.get("label") else key.label
+        key.value = body.data.get("value") if body.data.get("value") else key.value
+        key.passphrase = body.data.get("passphrase") if body.data.get("passphrase") else key.passphrase
+        key.save()
+
+        return Response({"message":"Key Updated"},status=200)
+        
+
+
     body = CreateKeySerializer(data=request.data)
     if not body.is_valid():
         return Response({"message": body.errors}, status=400)
@@ -154,3 +200,31 @@ def create_key(request):
     return Response({"message": "Key created","id":key.id}, status=201)
 
 
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+def decode_password(request:HttpRequest):
+    body = DecodePasswordSerializer(data=request.data)
+    if not body.is_valid():
+        print(body.errors)
+        return Response({"message":body.errors},status=400)
+    token = request.headers["Authorization"].split(" ")[1]
+    user = Token.objects.get(key=token).user
+
+    host = get_object_or_404(Host,id=body.data.get("id"),owner_id=user.id,)
+    if(host.key):
+        host.key.decode_value(body.data.get("master_key"))
+        host.key.decode_passphrase(body.data.get("master_key"))
+
+        return Response({"password":host.key.value,"passphrase":host.key.passphrase,"key":True})
+    try:
+        host.decode_password(body.data.get("master_key"));
+    except Exception as e:
+        return Response({"message":"Invalid Master key"},status=400)
+    
+    return Response({"password": host.password,"key":False}, status=200)
+
+
+
+    
