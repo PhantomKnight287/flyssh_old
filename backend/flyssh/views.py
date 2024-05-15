@@ -167,6 +167,14 @@ def keys(request:HttpRequest):
         key.label = body.data.get("label") if body.data.get("label") else key.label
         key.value = body.data.get("value") if body.data.get("value") else key.value
         key.passphrase = body.data.get("passphrase") if body.data.get("passphrase") else key.passphrase
+        if(body.data.get("value",None) is not None):
+            key.encode_key(
+                body.data.get("master_key")
+            )
+        if(body.data.get("passphrase",None) is not None):
+            key.encode_passphrase(
+                body.data.get("master_key")
+            )
         key.save()
 
         return Response({"message":"Key Updated"},status=200)
@@ -216,7 +224,6 @@ def decode_password(request:HttpRequest):
     if(host.key):
         host.key.decode_value(body.data.get("master_key"))
         host.key.decode_passphrase(body.data.get("master_key"))
-
         return Response({"password":host.key.value,"passphrase":host.key.passphrase,"key":True})
     try:
         host.decode_password(body.data.get("master_key"));
