@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:flyssh/constants/main.dart';
+import 'package:flyssh/models/theme.dart';
+import 'package:flyssh/themes/main.dart';
 import 'package:flyssh/virtual_keyboard.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,17 +37,33 @@ class _SshScreenState extends State<SshScreen> {
   late var title = widget.address;
   late final SSHSession session;
   bool loaded = false;
+  CustomTerminalTheme theme = CustomTerminalTheme.from(TerminalThemes.defaultTheme, name: "Default");
 
   @override
   void initState() {
     super.initState();
     initTerminal();
+    initTheme();
   }
 
   @override
   void dispose() {
     super.dispose();
     session?.close();
+  }
+
+  void initTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final theme = prefs.getString('terminal_theme');
+    if (theme != null) {
+      final themeToSet = themes.where((element) => element.name == theme);
+      // ignore: unnecessary_null_comparison
+      if (themeToSet.isNotEmpty) {
+        setState(() {
+          this.theme = themeToSet.toList()[0];
+        });
+      }
+    }
   }
 
   Future<void> initTerminal() async {
@@ -118,6 +136,26 @@ class _SshScreenState extends State<SshScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.label ?? widget.username),
+        actions: [
+          DropdownButton<CustomTerminalTheme>(
+            hint: const Text(
+              "Theme",
+              style: TextStyle(color: Colors.white),
+            ),
+            items: themes.map((e) {
+              return DropdownMenuItem(value: e, child: Text(e.name));
+            }).toList(),
+            onChanged: (value) async {
+              if (value != null) {
+                setState(() {
+                  theme = value;
+                });
+                final prefs = await SharedPreferences.getInstance();
+                prefs.setString("terminal_theme", value.name);
+              }
+            },
+          )
+        ],
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -139,10 +177,7 @@ class _SshScreenState extends State<SshScreen> {
             ),
           if (loaded)
             Expanded(
-              child: TerminalView(
-                terminal,
-                cursorType: TerminalCursorType.block,
-              ),
+              child: TerminalView(terminal, cursorType: TerminalCursorType.block, theme: theme == null ? TerminalThemes.defaultTheme : theme!),
             ),
           if (loaded) VirtualKeyboardView(keyboard),
         ],

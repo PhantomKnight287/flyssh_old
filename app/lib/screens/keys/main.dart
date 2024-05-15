@@ -54,7 +54,7 @@ class _KeysScreenState extends State<KeysScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   enabled: true,
-                  onLongPress: () {
+                  onTap: () {
                     Get.to(
                       () => UpdateKeyScreen(
                         sshKey: key,
