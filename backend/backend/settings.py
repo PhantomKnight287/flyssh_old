@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 from dotenv import load_dotenv
-from os import environ, getenv
+from os import environ, getenv, path
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -152,3 +152,6 @@ APPEND_SLASH = False
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+PROJECT_DIR = path.dirname(path.abspath(__file__))
+STATIC_ROOT = path.join(PROJECT_DIR, 'static')
