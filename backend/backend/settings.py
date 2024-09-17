@@ -89,7 +89,7 @@ DATABASES = {
     'PORT': getenv('PGPORT', 5432),
     'OPTIONS': {
       'sslmode': 'require',
-      'endpoint':getenv("ENDPOINT_ID")
+    #   'endpoint':getenv("ENDPOINT_ID")
     },
   }
 }
